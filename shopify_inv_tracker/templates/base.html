@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+{% load static %}
+<head>
+  <title>{% block title %}Shopify Application{% endblock %}</title>
+  <link href="{% static 'stylesheets/application.css' %}" media="screen" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="https://cdn.shopify.com/s/assets/external/app.js"></script>
+
+  <script src="https://unpkg.com/@shopify/app-bridge"></script>
+  <script>
+    var AppBridge = window['app-bridge'];
+    var createApp = AppBridge.default;
+    var app = createApp({
+      apiKey: '{{ api_key }}',
+      shopOrigin: '{{ current_shop.myshopify_domain }}',
+      forceRedirect: false
+    });
+    var actions = AppBridge.actions;
+    var TitleBar = actions.TitleBar;
+    var Button = actions.Button;
+    var Redirect = actions.Redirect;
+
+    var breadcrumb = Button.create(app, {label: 'Testing'});
+    breadcrumb.subscribe(Button.Action.CLICK, function() {
+      app.dispatch(Redirect.toApp({path: '/design'}));
+    });
+
+    var titleBarOptions = {
+      title: '{{ page_name }}',
+      breadcrumbs: breadcrumb,
+    };
+
+    var myTitleBar = TitleBar.create(app, titleBarOptions);
+  </script>
+</head>
+
+<body>
+  <div id="header">
+    <h1><a href="{% url 'home:index' %}">Shopify Demo Application</a></h1>
+
+    <p id="login-link">
+      {% if current_shop %}
+          <span class="note">Store:</span> <a href="https://{{ current_shop.myshopify_domain }}" class="shop_name" target="_blank">{{ current_shop.name }}</a> <span class="note">|</span>
+          <a href="{% url 'shopify_app:logout' %}">logout</a>
+      {% endif %}
+    </p>
+  </div>
+
+  <div id="container" class="clearfix">
+    <ul id="tabs">
+      <li><a href="{% url 'home:index' %}">Home</a></li>
+      <li><a href="{% url 'home:design' %}">Design Help</a></li>
+    </ul>
+
+    <!-- Flash error & notice-->
+    {% if messages %}
+      {% for message in messages %}
+      <div{% if message.tags %} class="{{ message.tags }}-message"{% endif %}>{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- begin div.main-->
+    <div id="main">
+      {% block content %}{% endblock %}
+    </div>
+    <!-- end div.main -->
+  </div>
+</body>
+</html>
