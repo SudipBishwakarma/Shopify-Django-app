@@ -47,8 +47,7 @@ class Variant(models.Model):
 
 class InventoryAdjustmentHistory(models.Model):
     """Model representing inventory adjustment history of shopify variant products."""
-    myshopify_domain = models.CharField(max_length=100, help_text='Shopify store domain.')
-    variant_id = models.BigIntegerField('variant ID', help_text='Variant product id.')
+    variant = models.ForeignKey('Variant', on_delete=models.CASCADE, help_text='Variant primary key.')
     updated_at = models.DateTimeField(null=True, blank=True)
     adjustment = models.IntegerField(help_text='Inventory adjustment: new qty from webhook - current qty')
     qty = models.IntegerField(help_text='Current quantity')

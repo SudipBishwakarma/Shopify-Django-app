@@ -35,9 +35,9 @@ def test_bg_task(data):
     shopify_session = shopify.Session(shop_url, '2019-04', token)
     shopify.ShopifyResource.activate_session(shopify_session)
     products = shopify.Product.find_first()
-    data = TestModel.objects.create()
-    data.test_name = products[0].title
-    data.test_data = products[0].product_type
+    data = TestModel()
+    data.test_name = products.title
+    data.test_data = products.product_type
     data.save()
     shopify.ShopifyResource.clear_session()
 
