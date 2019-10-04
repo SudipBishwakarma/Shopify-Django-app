@@ -1,0 +1,10 @@
+Django==2.2.4
+django-background-tasks==1.2.0
+django-compat==1.0.15
+mysqlclient==1.4.4
+pyactiveresource==2.1.2
+pytz==2019.2
+PyYAML==5.1.2
+ShopifyAPI==5.1.0
+six==1.12.0
+sqlparse==0.3.0
