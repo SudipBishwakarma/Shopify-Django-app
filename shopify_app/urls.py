@@ -7,4 +7,5 @@ urlpatterns = [
     path('authenticate/', views.authenticate, name='authenticate'),
     path('finalize/', views.finalize, name='finalize'),
     path('logout/', views.logout, name='logout'),
+    path('shopify_webhook/', views.shopify_webhook, name='shopify-webhook'),
 ]

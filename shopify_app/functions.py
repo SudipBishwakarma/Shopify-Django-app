@@ -4,7 +4,7 @@ import shopify
 from .models import ShopifyStore, Product, Variant, InventoryAdjustmentHistory
 
 
-class UserLocal:
+class Operations:
     def __init__(self, myshopify_domain):
         self._myshopify_domain = myshopify_domain
         try:
@@ -12,23 +12,26 @@ class UserLocal:
         except Exception as e:
             raise e
 
-        token, url = self._user.access_token, self._user.myshopify_domain
-        shopify_session = shopify.Session(url, '2019-04', token)
+        self._token, self._url = self._user.access_token, self._user.myshopify_domain
+        self._count_products = self._count_variants = 0
+
+    def activate_session(self):
+        shopify_session = shopify.Session(self._url, '2019-04', self._token)
         shopify.ShopifyResource.activate_session(shopify_session)
-        self._count_products = shopify.Product.count()
-        self._count_variants = shopify.Variant.count()
+
+    def clear_session(self):
+        shopify.ShopifyResource.clear_session()
 
     def count_products(self):
+        self._count_products = shopify.Product.count()
         return self._count_products
 
     def count_variants(self):
+        self._count_variants = shopify.Variant.count()
         return self._count_variants
 
     def get_user(self):
         return self._user
-
-    def clear_session(self):
-        shopify.ShopifyResource.clear_session()
 
     def bulk_add_products(self):
         """Add products to database."""
@@ -45,7 +48,7 @@ class UserLocal:
             Product.objects.bulk_create(product_models)
             print('chunk added: %s' % chunk)
             chunk -= 1
-        print('Took %ss' % math.ceil((time.time() - tic)))
+        print('Took about %ss' % math.ceil((time.time() - tic)))
 
     def bulk_add_variants(self):
         """Add variants to database."""
@@ -63,7 +66,22 @@ class UserLocal:
             Variant.objects.bulk_create(variant_models)
             print('chunk added: %s' % chunk)
             chunk -= 1
-        print('Took %ss' % math.ceil((time.time() - tic)))
+        print('Took about %ss' % math.ceil((time.time() - tic)))
+
+    def webhook_inventory_adjustment(self, inventory_item_id, adjustment, updated_at):
+        try:
+            variant = Variant.objects.get(inventory_item_id=inventory_item_id, product__store_id=self._user.id)
+            inventory_adjustment = InventoryAdjustmentHistory()
+            inventory_adjustment.variant = variant
+            inventory_adjustment.updated_at = updated_at
+            inventory_adjustment.qty = adjustment
+            inventory_adjustment.adjustment = adjustment - variant.qty
+            inventory_adjustment.save()
+            variant.qty = adjustment
+            variant.save()
+        except Exception as e:
+            print(e)
+            pass
 
     def __str__(self):
-        return "Shopify store: %s" % self.user.myshopify_domain
+        return "Shopify store: %s" % self._user.myshopify_domain

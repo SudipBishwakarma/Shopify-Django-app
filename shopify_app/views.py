@@ -4,9 +4,14 @@ import shopify
 from django.template import RequestContext
 from django.contrib import messages
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from shopify_app.helpers import verify_webhook
 
+import json
+from django.middleware.csrf import CsrfViewMiddleware
 from .models import ShopifyStore
 from django.utils import timezone
+from shopify_app.functions import Operations
 
 
 def index(request):
@@ -99,3 +104,18 @@ def logout(request):
     messages.info(request, "Successfully logged out.")
 
     return redirect(reverse('shopify_app:login'))
+
+
+@csrf_exempt
+def shopify_webhook(request):
+    if request.method == 'POST' and verify_webhook(request.body, request.headers.get('X-Shopify-Hmac-Sha256')):
+        shop_url = request.headers.get('X-Shopify-Shop-Domain')
+        data = json.loads(request.body)
+        store = Operations(shop_url)
+        store.activate_session()
+        inventory_item_id = data.get('inventory_item_id')
+        adjustment = data.get('available')
+        updated_at = data.get('updated_at')
+        store.webhook_inventory_adjustment(inventory_item_id, adjustment, updated_at)
+
+    return render(request, 'shopify_app/webhook.html')
