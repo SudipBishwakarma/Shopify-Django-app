@@ -11,7 +11,7 @@ import json
 from django.middleware.csrf import CsrfViewMiddleware
 from .models import ShopifyStore
 from django.utils import timezone
-from shopify_app.functions import Operations
+from shopify_app.helpers import ShopifyHelper
 
 
 def index(request):
@@ -64,11 +64,7 @@ def create_shopify_store_user(data):
 
 
 def authenticate(request):
-    if request.method == 'GET':
-        shop = request.GET.get('shop')
-
-    if request.method == 'POST':
-        shop = request.POST.get('shop')
+    shop = request.GET.get('shop') or request.POST.get('shop')
 
     if shop:
         scope = settings.SHOPIFY_API_SCOPE
@@ -109,9 +105,10 @@ def logout(request):
 @csrf_exempt
 def shopify_webhook(request):
     if request.method == 'POST' and verify_webhook(request.body, request.headers.get('X-Shopify-Hmac-Sha256')):
+        print(request.headers.get('X-Shopify-Topic'))
         shop_url = request.headers.get('X-Shopify-Shop-Domain')
         data = json.loads(request.body)
-        store = Operations(shop_url)
+        store = ShopifyHelper(shop_url)
         store.activate_session()
         inventory_item_id = data.get('inventory_item_id')
         adjustment = data.get('available')

@@ -1,10 +1,24 @@
+from django.conf import settings
+import hmac
+import hashlib
+import base64
+
 import time
 import math
 import shopify
 from .models import ShopifyStore, Product, Variant, InventoryAdjustmentHistory
 
+SECRET = settings.SHOPIFY_API_SECRET
 
-class Operations:
+
+def verify_webhook(data, hmac_header):
+    digest = hmac.new(SECRET.encode('utf-8'), data, hashlib.sha256).digest()
+    computed_hmac = base64.b64encode(digest)
+
+    return hmac.compare_digest(computed_hmac, hmac_header.encode('utf-8'))
+
+
+class ShopifyHelper:
     def __init__(self, myshopify_domain):
         self._myshopify_domain = myshopify_domain
         try:
@@ -81,7 +95,6 @@ class Operations:
             variant.save()
         except Exception as e:
             print(e)
-            pass
 
     def __str__(self):
         return "Shopify store: %s" % self._user.myshopify_domain
