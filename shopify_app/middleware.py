@@ -26,7 +26,7 @@ class LoginProtection(MiddlewareMixin):
         if hasattr(request, 'session') and 'shopify' in request.session:
             shop_url = request.session['shopify']['shop_url']
             token = request.session['shopify']['access_token']
-            shopify_session = shopify.Session(shop_url, '2019-04', token)
+            shopify_session = shopify.Session(shop_url, settings.SHOPIFY_API_VERSION, token)
             shopify.ShopifyResource.activate_session(shopify_session)
 
     def process_response(self, request, response):

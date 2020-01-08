@@ -5,13 +5,12 @@ from django.template import RequestContext
 from django.contrib import messages
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
-from shopify_app.helpers import verify_webhook
 
 import json
-from django.middleware.csrf import CsrfViewMiddleware
 from .models import ShopifyStore
 from django.utils import timezone
-from shopify_app.helpers import ShopifyHelper
+from .helpers import verify_webhook, ShopifyHelper
+from . import tasks
 
 
 def index(request):
@@ -44,7 +43,7 @@ def login(request):
 
 def create_shopify_store_user(data):
     shop_url, token = data.values()
-    shopify_session = shopify.Session(shop_url, '2019-04', token)
+    shopify_session = shopify.Session(shop_url, settings.SHOPIFY_API_VERSION, token)
     shopify.ShopifyResource.activate_session(shopify_session)
     user, created = ShopifyStore.objects.get_or_create(myshopify_domain=shop_url)
     if created:
@@ -65,11 +64,10 @@ def create_shopify_store_user(data):
 
 def authenticate(request):
     shop = request.GET.get('shop') or request.POST.get('shop')
-
     if shop:
         scope = settings.SHOPIFY_API_SCOPE
         redirect_uri = request.build_absolute_uri(reverse('shopify_app:finalize'))
-        permission_url = shopify.Session(shop.strip(), '2019-04').create_permission_url(scope, redirect_uri)
+        permission_url = shopify.Session(shop.strip(), settings.SHOPIFY_API_VERSION).create_permission_url(scope, redirect_uri)
         return redirect(permission_url)
 
     return redirect(_return_address(request))
@@ -78,7 +76,7 @@ def authenticate(request):
 def finalize(request):
     shop_url = request.GET.get('shop')
     try:
-        shopify_session = shopify.Session(shop_url, '2019-04')
+        shopify_session = shopify.Session(shop_url, settings.SHOPIFY_API_VERSION)
         request.session['shopify'] = {
             "shop_url": shop_url,
             "access_token": shopify_session.request_token(request.GET)
@@ -103,16 +101,68 @@ def logout(request):
 
 
 @csrf_exempt
-def shopify_webhook(request):
+def webhook_inventory_levels_update(request):
     if request.method == 'POST' and verify_webhook(request.body, request.headers.get('X-Shopify-Hmac-Sha256')):
-        print(request.headers.get('X-Shopify-Topic'))
+        topic = request.headers.get('X-Shopify-Topic')
         shop_url = request.headers.get('X-Shopify-Shop-Domain')
         data = json.loads(request.body)
-        store = ShopifyHelper(shop_url)
-        store.activate_session()
-        inventory_item_id = data.get('inventory_item_id')
-        adjustment = data.get('available')
-        updated_at = data.get('updated_at')
-        store.webhook_inventory_adjustment(inventory_item_id, adjustment, updated_at)
+        print(data)
+        data.update({'X-Shopify-Shop-Domain': shop_url})
+        if topic == 'inventory_levels/update':
+            tasks.inventory_levels_update(data,
+                                          verbose_name=f'Task for inventory_levels/update webhook event: {shop_url}')
+    return render(request, 'shopify_app/webhook.html')
 
+
+@csrf_exempt
+def webhook_inventory_items_update(request):
+    if request.method == 'POST' and verify_webhook(request.body, request.headers.get('X-Shopify-Hmac-Sha256')):
+        topic = request.headers.get('X-Shopify-Topic')
+        shop_url = request.headers.get('X-Shopify-Shop-Domain')
+        data = json.loads(request.body)
+        print(data)
+        data.update({'X-Shopify-Shop-Domain': shop_url})
+        if topic == 'inventory_items/update':
+            tasks.inventory_items_update(data,
+                                         verbose_name=f'Task for inventory_levels/update webhook event: {shop_url}')
+    return render(request, 'shopify_app/webhook.html')
+
+
+@csrf_exempt
+def webhook_products_update(request):
+    if request.method == 'POST' and verify_webhook(request.body, request.headers.get('X-Shopify-Hmac-Sha256')):
+        topic = request.headers.get('X-Shopify-Topic')
+        shop_url = request.headers.get('X-Shopify-Shop-Domain')
+        data = json.loads(request.body)
+        print(data)
+        data.update({'X-Shopify-Shop-Domain': shop_url})
+        if topic == 'products/update':
+            tasks.products_update(data, verbose_name=f'Task for inventory_levels/update webhook event: {shop_url}')
+    return render(request, 'shopify_app/webhook.html')
+
+
+@csrf_exempt
+def webhook_inventory_items_delete(request):
+    if request.method == 'POST' and verify_webhook(request.body, request.headers.get('X-Shopify-Hmac-Sha256')):
+        topic = request.headers.get('X-Shopify-Topic')
+        shop_url = request.headers.get('X-Shopify-Shop-Domain')
+        data = json.loads(request.body)
+        print(data)
+        data.update({'X-Shopify-Shop-Domain': shop_url})
+        if topic == 'inventory_items/delete':
+            tasks.inventory_items_delete(data,
+                                         verbose_name=f'Task for inventory_levels/update webhook event: {shop_url}')
+    return render(request, 'shopify_app/webhook.html')
+
+
+@csrf_exempt
+def webhook_products_delete(request):
+    if request.method == 'POST' and verify_webhook(request.body, request.headers.get('X-Shopify-Hmac-Sha256')):
+        topic = request.headers.get('X-Shopify-Topic')
+        shop_url = request.headers.get('X-Shopify-Shop-Domain')
+        data = json.loads(request.body)
+        print(data)
+        data.update({'X-Shopify-Shop-Domain': shop_url})
+        if topic == 'products/delete':
+            tasks.products_delete(data, verbose_name=f'Task for inventory_levels/update webhook event: {shop_url}')
     return render(request, 'shopify_app/webhook.html')

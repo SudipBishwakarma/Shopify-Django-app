@@ -1,0 +1,12 @@
+{% load render_table from django_tables2 %}
+{% load bootstrap3 %}
+
+{% bootstrap_css %}
+
+<p>Inventory History</p>
+
+{% if table.data %}
+{% render_table table 'django_tables2/bootstrap.html' %}
+{% else %}
+No adjustments found
+{% endif %}

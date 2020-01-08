@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 
 
 class ShopifyStore(models.Model):
@@ -33,12 +32,14 @@ class Product(models.Model):
 
 class Variant(models.Model):
     """Model representing variant product belonging to the main product."""
-    product = models.ForeignKey('Product', on_delete=models.CASCADE, help_text='ID from Product model.')
+    store = models.ForeignKey('ShopifyStore', on_delete=models.CASCADE, help_text='Shopify store id.')
     variant_id = models.BigIntegerField('variant ID', help_text='Variant product from shopify store.')
+    product_id = models.BigIntegerField('product ID', help_text='Parent product of variant.', null=True, blank=True)
     title = models.CharField(max_length=200, help_text='Variant title', null=True, blank=True)
     price = models.FloatField(help_text='Variant product price.')
     sku = models.CharField(max_length=30, help_text='Variant SKU.', null=True, blank=True)
-    qty = models.IntegerField(help_text='Variant quantity')
+    qty = models.IntegerField(default=0, help_text='Variant quantity')
+    inventory_management = models.BooleanField(help_text='Inventory Managed', default=False, null=True, blank=True)
     inventory_item_id = models.BigIntegerField(help_text='Variant inventory item id')
 
     def __str__(self):
@@ -53,4 +54,4 @@ class InventoryAdjustmentHistory(models.Model):
     qty = models.IntegerField(help_text='Current quantity')
 
     def __str__(self):
-        return self.adjustment
+        return f'Adjustment: {self.adjustment}'
