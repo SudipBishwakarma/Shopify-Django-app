@@ -1,6 +1,11 @@
 Django==2.2.6
 django-background-tasks==1.2.0
+django-bootstrap3==12.0.3
 django-compat==1.0.15
+django-filter==2.2.0
+django-tables2==2.2.1
+mod-wsgi==4.6.8
+mod-wsgi-httpd==2.4.39.1
 mysqlclient==1.4.4
 pyactiveresource==2.1.2
 pytz==2019.3

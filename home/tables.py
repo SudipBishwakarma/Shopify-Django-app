@@ -2,7 +2,7 @@ import django_tables2 as tables
 from shopify_app.models import Product, Variant, InventoryAdjustmentHistory
 from django.urls import reverse
 from django.utils.html import format_html
-from django import forms
+
 
 class ProductTable(tables.Table):
     no_image = "https://cdn.shopify.com/s/assets/" \
