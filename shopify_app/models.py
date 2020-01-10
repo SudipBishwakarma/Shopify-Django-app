@@ -24,6 +24,7 @@ class Product(models.Model):
     vendor = models.CharField(max_length=200, help_text='Product vendor.', null=True, blank=True)
     type = models.CharField(max_length=200, help_text='Product type', null=True, blank=True)
     image = models.CharField(max_length=300, help_text='Product image', null=True, blank=True)
+    published = models.BooleanField(default=False, help_text='Product published in online store')
 
     def __str__(self):
         """String representation for model object."""

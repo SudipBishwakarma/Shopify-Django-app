@@ -217,7 +217,8 @@ class ShopifyHelper:
                                       title=product.title,
                                       vendor=product.vendor,
                                       type=product.product_type,
-                                      image=product.image.thumb if product.image else None) for product in products]
+                                      image=product.image.thumb if product.image else None,
+                                      published=True if product.published_at else False) for product in products]
             Product.objects.bulk_create(product_models)
             cursor = shopify.ShopifyResource.connection.response.headers.get('Link')
             for _ in cursor.split(','):
