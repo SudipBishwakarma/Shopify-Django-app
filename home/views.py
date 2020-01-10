@@ -1,4 +1,5 @@
 from django.shortcuts import render, reverse, redirect
+from django.urls import reverse_lazy
 import shopify
 from shopify_app.decorators import shopify_login_required
 from django.utils.decorators import method_decorator
@@ -15,8 +16,11 @@ from .filters import ProductFilter
 @method_decorator(shopify_login_required, name='dispatch')
 class ProductListView(SingleTableMixin, FilterView):
     table_class = ProductTable
+    table_pagination = {'per_page': 20}
+
     template_name = 'home/product.html'
     filterset_class = ProductFilter
+    extra_context = {'products_list': reverse_lazy('home:products-list')}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

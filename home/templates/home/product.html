@@ -7,6 +7,7 @@
     <form action="" method="get" class="form form-inline">
         {% bootstrap_form filter.form layout='inline' %}
         {% bootstrap_button 'Filter' %}
+        {% bootstrap_button 'Reset' href=products_list %}
     </form>
 {% endif %}
 {% render_table table 'django_tables2/bootstrap4.html' %}
