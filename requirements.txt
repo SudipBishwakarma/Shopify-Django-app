@@ -9,7 +9,7 @@ mod-wsgi-httpd==2.4.39.1
 mysqlclient==1.4.4
 pyactiveresource==2.1.2
 pytz==2019.3
-PyYAML==5.1.2
+PyYAML==5.4
 ShopifyAPI==5.1.2
 six==1.12.0
 sqlparse==0.3.0
